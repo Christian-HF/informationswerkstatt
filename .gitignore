@@ -1,0 +1,24 @@
+# Node / frontend
+node_modules/
+dist/
+build/
+.cache/
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+# Env
+.env
+.env.*
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Python / functions
+__pycache__/
+*.pyc
+.python_packages/
+.venv/
+# Coverage
+coverage/

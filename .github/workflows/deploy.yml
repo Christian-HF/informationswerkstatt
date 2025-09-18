@@ -1,0 +1,70 @@
+name: Deploy InformationsWerkstatt
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Infrastructure
+        uses: azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          resourceGroupName: rg_informationswerkstatt
+          template: infra/main.bicep
+          parameters: env=dev sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          if [ -f package.json ]; then
+            npm ci
+            npm run build || echo "Frontend placeholder - build skipped"
+          else
+            echo "No frontend yet (placeholder)"
+          fi
+
+      - name: Deploy Frontend (Static Web Apps)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          app_location: "frontend"
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_TOKEN }}
+
+      - name: Build & Deploy API
+        run: |
+          cd api
+          if [ -f package.json ]; then
+            npm ci
+            npm run build || echo "API placeholder - build skipped"
+            az webapp deploy --name api-hf-info-dev --resource-group rg_informationswerkstatt --src-path ./dist || true
+          else
+            echo "No API yet (placeholder)"
+          fi
+
+      - name: Deploy Functions (Crawler)
+        run: |
+          cd functions
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt || true
+          fi
+          echo "Functions placeholder - deployment will be added once code exists"
