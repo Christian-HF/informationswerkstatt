@@ -16,14 +16,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---- Azure Login via Service Principal (Secret JSON) ----
+      # ---- Azure Login via Secret (Service Principal JSON) ----
       - name: Azure login (service principal via creds JSON)
         uses: azure/login@v2
         with:
           auth-type: service-principal
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # ---- Infrastruktur (Bicep) – falls vorhanden ----
+      # ---- (Optional) Infrastruktur deployen, wenn Bicep vorhanden ----
       - name: Deploy Infrastructure (Bicep)
         if: hashFiles('infra/main.bicep') != ''
         uses: azure/arm-deploy@v1
@@ -35,13 +35,14 @@ jobs:
             env=dev
             sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
 
-      # ---- Node vorbereiten (für Frontend-Build) ----
+      # ---- (Optional) Node nur vorbereiten, wenn Frontend da ist ----
       - name: Setup Node.js
+        if: hashFiles('frontend/package.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # ---- Frontend bauen, falls vorhanden ----
+      # ---- (Optional) Frontend bauen ----
       - name: Build Frontend
         if: hashFiles('frontend/package.json') != ''
         working-directory: frontend
@@ -49,9 +50,9 @@ jobs:
           npm ci
           npm run build
 
-      # ---- Static Web App Deployment ----
-      # Lässt den SWA-Action selbst bauen, falls kein lokaler Build vorliegt.
+      # ---- (Optional) Frontend deployen, nur wenn SWA-Token existiert ----
       - name: Deploy Frontend (Static Web Apps)
+        if: hashFiles('frontend/package.json') != '' && secrets.AZURE_SWA_TOKEN != ''
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_TOKEN }}
@@ -60,22 +61,8 @@ jobs:
           app_location: "frontend"
           output_location: "dist"
 
-      # ---- API-Deployment (Platzhalter) ----
-      - name: Build & Deploy API (App Service) [placeholder]
-        if: hashFiles('api/package.json') != ''
-        working-directory: api
-        run: |
-          npm ci
-          npm run build || echo "API placeholder - build skipped"
-          echo "TODO: az webapp deploy --name api-hf-info-dev --resource-group rg_informationswerkstatt --src-path <zip/dist>"
-          echo "Hinweis: Für App Service-Deployments bitte Build-Output (z. B. ZIP) und StartCommand vorbereiten."
-
-      # ---- Functions-Deployment (Platzhalter) ----
-      - name: Deploy Functions (Crawler) [placeholder]
-        if: hashFiles('functions/requirements.txt') != ''
-        working-directory: functions
-        run: |
-          python -m pip install -U pip
-          pip install -r requirements.txt || true
-          echo "TODO: az functionapp deployment source config-zip --name func-hf-info-dev --resource-group rg_informationswerkstatt --src <zip>"
-
+      # ---- Platzhalter: API / Functions später ----
+      - name: API placeholder
+        run: echo "API-Deployment folgt, sobald Code vorhanden ist."
+      - name: Functions placeholder
+        run: echo "Functions-Deployment folgt, sobald Code vorhanden ist."
