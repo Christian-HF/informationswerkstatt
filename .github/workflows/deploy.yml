@@ -2,69 +2,80 @@ name: Deploy InformationsWerkstatt
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Azure Login
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- Azure Login via Service Principal (Secret JSON) ----
+      - name: Azure login (service principal via creds JSON)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: service-principal
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy Infrastructure
+      # ---- Infrastruktur (Bicep) – falls vorhanden ----
+      - name: Deploy Infrastructure (Bicep)
+        if: hashFiles('infra/main.bicep') != ''
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
           resourceGroupName: rg_informationswerkstatt
           template: infra/main.bicep
-          parameters: env=dev sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+          parameters: >
+            env=dev
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
 
+      # ---- Node vorbereiten (für Frontend-Build) ----
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # ---- Frontend bauen, falls vorhanden ----
       - name: Build Frontend
+        if: hashFiles('frontend/package.json') != ''
+        working-directory: frontend
         run: |
-          cd frontend
-          if [ -f package.json ]; then
-            npm ci
-            npm run build || echo "Frontend placeholder - build skipped"
-          else
-            echo "No frontend yet (placeholder)"
-          fi
+          npm ci
+          npm run build
 
+      # ---- Static Web App Deployment ----
+      # Lässt den SWA-Action selbst bauen, falls kein lokaler Build vorliegt.
       - name: Deploy Frontend (Static Web Apps)
         uses: Azure/static-web-apps-deploy@v1
         with:
-          app_location: "frontend"
           azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "frontend"
+          output_location: "dist"
 
-      - name: Build & Deploy API
+      # ---- API-Deployment (Platzhalter) ----
+      - name: Build & Deploy API (App Service) [placeholder]
+        if: hashFiles('api/package.json') != ''
+        working-directory: api
         run: |
-          cd api
-          if [ -f package.json ]; then
-            npm ci
-            npm run build || echo "API placeholder - build skipped"
-            az webapp deploy --name api-hf-info-dev --resource-group rg_informationswerkstatt --src-path ./dist || true
-          else
-            echo "No API yet (placeholder)"
-          fi
+          npm ci
+          npm run build || echo "API placeholder - build skipped"
+          echo "TODO: az webapp deploy --name api-hf-info-dev --resource-group rg_informationswerkstatt --src-path <zip/dist>"
+          echo "Hinweis: Für App Service-Deployments bitte Build-Output (z. B. ZIP) und StartCommand vorbereiten."
 
-      - name: Deploy Functions (Crawler)
+      # ---- Functions-Deployment (Platzhalter) ----
+      - name: Deploy Functions (Crawler) [placeholder]
+        if: hashFiles('functions/requirements.txt') != ''
+        working-directory: functions
         run: |
-          cd functions
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt || true
-          fi
-          echo "Functions placeholder - deployment will be added once code exists"
+          python -m pip install -U pip
+          pip install -r requirements.txt || true
+          echo "TODO: az functionapp deployment source config-zip --name func-hf-info-dev --resource-group rg_informationswerkstatt --src <zip>"
+
