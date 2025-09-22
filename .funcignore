@@ -1,0 +1,5 @@
+.git*
+frontend/
+infra/
+README.md
+*.zip
