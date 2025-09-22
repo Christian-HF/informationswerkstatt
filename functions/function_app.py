@@ -1,6 +1,7 @@
 import os
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
+from azure.core.exceptions import ResourceExistsError
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
@@ -21,8 +22,12 @@ def upload_file(req: func.HttpRequest) -> func.HttpResponse:
     if conn:
         try:
             bsc = BlobServiceClient.from_connection_string(conn)
-            bsc.get_container_client(container).create_container(exist_ok=True)
-            blob = bsc.get_blob_client(container=container, blob=filename)
+            cc = bsc.get_container_client(container)
+            try:
+                cc.create_container()
+            except ResourceExistsError:
+                pass
+            blob = cc.get_blob_client(blob=filename)
             blob.upload_blob(file.stream, overwrite=True)
             return func.HttpResponse(f"Uploaded to blob '{container}/{filename}'.", status_code=200)
         except Exception as e:
