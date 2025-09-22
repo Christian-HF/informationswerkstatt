@@ -19,3 +19,4 @@ automatischer Klassifikation und Q&A (RAG) – Azure-basiert.
    - `AZURE_SWA_TOKEN` (von der Static Web App)
 5. Pipeline triggert automatisch bei Push auf `main`.
 6. **Wichtig**: Ersetze Platzhalter (Passwörter/Tokens) vor echtem Deployment.
+
