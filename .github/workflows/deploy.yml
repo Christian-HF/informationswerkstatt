@@ -6,52 +6,52 @@ on:
   workflow_dispatch:
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ---- Azure Login via Secret (Service Principal JSON) ----
-      - name: Azure login (service principal via creds JSON)
+      # Azure Login via JSON-Creds (stabil, unabhängig von OIDC)
+      - name: Azure Login
         uses: azure/login@v2
         with:
+          auth-type: service-principal
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # ---- (Optional) Infrastruktur deployen, wenn Bicep vorhanden ----
-      - name: Deploy Infrastructure (Bicep)
+      # --- Infrastruktur (optional – nur ausführen, wenn infra/main.bicep existiert)
+      - name: Deploy Infrastructure (conditional)
         if: hashFiles('infra/main.bicep') != ''
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
           resourceGroupName: rg_informationswerkstatt
           template: infra/main.bicep
-          parameters: >
-            env=dev
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+          parameters: env=dev sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
 
-      # ---- (Optional) Node nur, wenn Frontend existiert ----
+      # --- Node 20 für Frontend
       - name: Setup Node.js
-        if: hashFiles('frontend/package.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # ---- (Optional) Frontend bauen ----
+      # --- Frontend build (wenn package.json vorhanden)
       - name: Build Frontend
-        if: hashFiles('frontend/package.json') != ''
-        working-directory: frontend
         run: |
-          npm ci
-          npm run build
+          if [ -f frontend/package.json ]; then
+            cd frontend
+            npm ci
+            npm run build
+          else
+            echo "No frontend yet – skipping build."
+          fi
 
-      # ---- (Optional) Frontend deployen, nur wenn SWA-Token gesetzt ----
+      # --- SWA Deploy (nur wenn Token gesetzt und Frontend existiert)
       - name: Deploy Frontend (Static Web Apps)
-        if: hashFiles('frontend/package.json') != '' && secrets.AZURE_SWA_TOKEN != ''
+        if: ${{ secrets.AZURE_SWA_TOKEN != '' && hashFiles('frontend/package.json') != '' }}
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_TOKEN }}
@@ -60,8 +60,36 @@ jobs:
           app_location: "frontend"
           output_location: "dist"
 
-      # ---- Platzhalter: API / Functions später ----
-      - name: API placeholder
-        run: echo "API-Deployment folgt, sobald Code vorhanden ist."
-      - name: Functions placeholder
-        run: echo "Functions-Deployment folgt, sobald Code vorhanden ist."
+      # --- Functions: nur wenn requirements.txt existiert; erst Existenz prüfen
+      - name: Build & Deploy Functions (Python) – robust
+        if: hashFiles('functions/requirements.txt') != ''
+        working-directory: functions
+        env:
+          RG_NAME: rg_informationswerkstatt
+          FUNC_NAME: func-hf-info-dev
+        run: |
+          echo "Checking if Function App '$FUNC_NAME' exists in RG '$RG_NAME'..."
+          if ! az functionapp show --name "$FUNC_NAME" --resource-group "$RG_NAME" >/dev/null 2>&1; then
+            echo "::warning::Function App '$FUNC_NAME' not found. Skipping zip-deploy."
+            exit 0
+          fi
+
+          python -m pip install -U pip
+          python -m pip install -r requirements.txt -t ./package
+
+          rsync -a --exclude 'package' ./ ./package/
+          (cd package && zip -rq ../functions.zip .)
+
+          echo "Starting zip-deploy..."
+          if ! az functionapp deployment source config-zip \
+              --resource-group "$RG_NAME" \
+              --name "$FUNC_NAME" \
+              --src functions.zip; then
+            echo "::warning::Zip-deploy failed – not failing the workflow."
+          fi
+
+      # --- Diagnose: wer sind wir / welche RGs sehen wir?
+      - name: Show Azure context
+        run: |
+          az account show --query '{name:name, id:id, tenantId:tenantId}' -o table
+          az group show --name rg_informationswerkstatt --query '{name:name, location:location, id:id}' || true
