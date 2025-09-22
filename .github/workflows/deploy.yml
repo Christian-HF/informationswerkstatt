@@ -22,7 +22,6 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          auth-type: service-principal
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # --- Infrastruktur (nur wenn vorhanden)
