@@ -24,9 +24,9 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # --- Infrastruktur (nur wenn vorhanden)
-      - name: Deploy Infrastructure (conditional)
-        if: hashFiles('infra/main.bicep') != ''
+      # --- Infrastruktur deployen (DEAKTIVIERT solange Bicep WIP ist) ---
+      - name: Deploy Infrastructure (Bicep)
+        if: ${{ false }}
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
