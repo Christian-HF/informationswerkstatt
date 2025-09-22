@@ -6,7 +6,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write  # für späteres OIDC nützlich
+  id-token: write  # stört nicht; gut, falls später OIDC genutzt wird
 
 jobs:
   smoke:
@@ -15,14 +15,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1) Prüfen, ob das Secret existiert und valides JSON ist
+      - name: Validate AZURE_CREDENTIALS JSON
+        run: |
+          test -n "${{ secrets.AZURE_CREDENTIALS }}" || (echo "AZURE_CREDENTIALS Secret fehlt" && exit 1)
+          echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -e . >/dev/null 2>&1 || (echo "AZURE_CREDENTIALS ist kein valides JSON" && exit 1)
+
+      # 2) Azure Login über das JSON-Secret
       - name: Azure login (service principal via creds JSON)
         uses: azure/login@v2
         with:
           auth-type: service-principal
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # 3) Anzeigen, wo wir eingeloggt sind
       - name: Show Azure context
-        run: az account show --query '{name:name, id:id, tenantId:tenantId}' -o table
+        run: |
+          az account show --query '{name:name, id:id, tenantId:tenantId}' -o table
+          az group list --query "[].{name:name, location:location}" -o table
 
+      # 4) RG-Zugriff explizit prüfen
       - name: Verify RG access
         run: az group show --name rg_informationswerkstatt --query '{name:name, location:location, id:id}'
