@@ -12,17 +12,20 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Secrets in env spiegeln, damit wir sie in if: verwenden können
+    env:
+      SWA_TOKEN: ${{ secrets.AZURE_SWA_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
-      # Azure Login via JSON-Creds (stabil, unabhängig von OIDC)
+      # Login via Credentials-JSON (stabil)
       - name: Azure Login
         uses: azure/login@v2
         with:
           auth-type: service-principal
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # --- Infrastruktur (optional – nur ausführen, wenn infra/main.bicep existiert)
+      # --- Infrastruktur (nur wenn vorhanden)
       - name: Deploy Infrastructure (conditional)
         if: hashFiles('infra/main.bicep') != ''
         uses: azure/arm-deploy@v1
@@ -32,13 +35,13 @@ jobs:
           template: infra/main.bicep
           parameters: env=dev sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
 
-      # --- Node 20 für Frontend
+      # --- Node 20
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # --- Frontend build (wenn package.json vorhanden)
+      # --- Frontend build (nur wenn vorhanden)
       - name: Build Frontend
         run: |
           if [ -f frontend/package.json ]; then
@@ -49,18 +52,18 @@ jobs:
             echo "No frontend yet – skipping build."
           fi
 
-      # --- SWA Deploy (nur wenn Token gesetzt und Frontend existiert)
+      # --- SWA Deploy (nur wenn Token gespiegelt & Frontend vorhanden)
       - name: Deploy Frontend (Static Web Apps)
-        if: ${{ secrets.AZURE_SWA_TOKEN != '' && hashFiles('frontend/package.json') != '' }}
+        if: ${{ env.SWA_TOKEN != '' && hashFiles('frontend/package.json') != '' }}
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_TOKEN }}
+          azure_static_web_apps_api_token: ${{ env.SWA_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "frontend"
           output_location: "dist"
 
-      # --- Functions: nur wenn requirements.txt existiert; erst Existenz prüfen
+      # --- Functions: robust, nur wenn vorhanden
       - name: Build & Deploy Functions (Python) – robust
         if: hashFiles('functions/requirements.txt') != ''
         working-directory: functions
@@ -88,7 +91,7 @@ jobs:
             echo "::warning::Zip-deploy failed – not failing the workflow."
           fi
 
-      # --- Diagnose: wer sind wir / welche RGs sehen wir?
+      # Diagnose
       - name: Show Azure context
         run: |
           az account show --query '{name:name, id:id, tenantId:tenantId}' -o table
