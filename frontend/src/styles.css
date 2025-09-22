@@ -1,0 +1,28 @@
+:root{
+  --hf-bg:#0b1f2a;
+  --hf-bg-2:#102b3a;
+  --hf-accent:#35c2e8;
+  --hf-text:#0b1f2a;
+}
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--hf-text)}
+a{color:inherit}
+.app{display:flex;min-height:100%}
+.sidebar{width:260px;min-width:260px;background:var(--hf-bg);color:white;display:flex;flex-direction:column;gap:8px;padding:20px 14px;position:sticky;top:0;height:100dvh}
+.brand{font-weight:700;margin:4px 6px 16px 6px;font-size:18px;letter-spacing:.2px}
+.nav a{display:block;padding:10px 12px;border-radius:10px;color:white;text-decoration:none;opacity:.9}
+.nav a.active{background:var(--hf-bg-2);opacity:1}
+.nav a:hover{background:var(--hf-bg-2)}
+.content{flex:1;padding:24px 24px 60px 24px}
+.topbar{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.burger{border:1px solid #dde2e6;border-radius:10px;background:white;padding:8px 10px;cursor:pointer}
+.badge{display:inline-block;background:var(--hf-bg);color:white;border-radius:999px;padding:2px 10px;font-size:12px}
+.card{border:1px solid #e7ebef;border-radius:14px;padding:16px;margin:10px 0;background:white}
+.grid{display:grid;gap:12px}
+.grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width: 900px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .2s}
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:16px}
+}

@@ -1,35 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./styles.css";
+import Sidebar from "./components/Sidebar.jsx";
+import Documents from "./pages/Documents.jsx";
+import Upload from "./pages/Upload.jsx";
+import Agent from "./pages/Agent.jsx";
+import Settings from "./pages/Settings.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App(){
+  const [open, setOpen] = useState(true);
+  const [view, setView] = useState("documents");
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="app">
+      <Sidebar open={open} view={view} setView={setView} />
+      <div className="content">
+        <div className="topbar">
+          <button className="burger" onClick={()=>setOpen(v=>!v)}>☰</button>
+          <div>
+            <div style={{ fontWeight:700 }}>Informationswerkstatt</div>
+            <div style={{ fontSize:12, opacity:.7 }}>
+              Prototype • React + SWA • {view}
+            </div>
+          </div>
+        </div>
 
-export default App
+        {view === "documents" && <Documents />}
+        {view === "upload"    && <Upload />}
+        {view === "agent"     && <Agent />}
+        {view === "settings"  && <Settings />}
+      </div>
+    </div>
+  );
+}
