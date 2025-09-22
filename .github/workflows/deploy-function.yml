@@ -1,0 +1,32 @@
+name: Deploy Function (upload)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'host.json'
+      - 'upload/**'
+      - '.github/workflows/deploy-function.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # (Optional) Prüfen, dass host.json und upload/ vorhanden sind
+      - name: Verify structure
+        run: |
+          test -f host.json || (echo "host.json missing at repo root" && exit 1)
+          test -f upload/function.json || (echo "upload/function.json missing" && exit 1)
+          test -f upload/__init__.py || (echo "upload/__init__.py missing" && exit 1)
+          echo "Structure OK"
+
+      # Deploy direkt mit Publish Profile (funktioniert für Linux/Python Consumption)
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: func-hf-info-dev
+          package: .
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
