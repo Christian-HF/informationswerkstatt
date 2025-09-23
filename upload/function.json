@@ -7,7 +7,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["post"],
-      "route": "upload"
+      "route": "upload/{filename}"
     },
     {
       "type": "http",
@@ -18,7 +18,7 @@
       "type": "blob",
       "direction": "out",
       "name": "outputBlob",
-      "path": "uploads/{headers.x-filename}",
+      "path": "uploads/{filename}",
       "connection": "AZURE_STORAGE_CONNECTION_STRING"
     }
   ]

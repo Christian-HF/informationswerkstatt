@@ -2,17 +2,22 @@ import azure.functions as func
 
 def main(req: func.HttpRequest, outputBlob: func.Out[bytes]) -> func.HttpResponse:
     try:
-        data = req.get_body() or b""
+        # Dateiinhalt aus Body holen
+        data = req.get_body()
         if not data:
-            return func.HttpResponse("Empty body. Send bytes or multipart 'file'.", status_code=400)
+            return func.HttpResponse("Empty body", status_code=400)
 
-        filename = req.headers.get("x-filename")
+        # Filename aus Route holen
+        filename = req.route_params.get("filename")
         if not filename:
-            return func.HttpResponse("Missing header 'x-filename'", status_code=400)
+            return func.HttpResponse("Missing filename in route", status_code=400)
 
-        # Schreibe in den Blob
+        # In den Blob schreiben
         outputBlob.set(data)
 
-        return func.HttpResponse(f"Uploaded to blob 'uploads/{filename}'", status_code=200)
+        return func.HttpResponse(
+            f"Uploaded to blob 'uploads/{filename}'",
+            status_code=200
+        )
     except Exception as e:
         return func.HttpResponse(f"Upload error: {e}", status_code=500)
