@@ -19,7 +19,7 @@
       "direction": "out",
       "name": "outputBlob",
       "path": "uploads/{filename}",
-      "connection": "AZURE_STORAGE_CONNECTION_STRING"
+      "connection": "AzureWebJobsStorage"
     }
   ]
 }
