@@ -1,23 +1,27 @@
+import logging
 import azure.functions as func
 
 def main(req: func.HttpRequest, outputBlob: func.Out[bytes]) -> func.HttpResponse:
     try:
-        # Dateiinhalt aus Body holen
+        # Dateiinhalt aus dem Request holen
         data = req.get_body()
         if not data:
-            return func.HttpResponse("Empty body", status_code=400)
+            return func.HttpResponse(
+                "Empty body. Send file content in request body.",
+                status_code=400
+            )
 
-        # Filename aus Route holen
-        filename = req.route_params.get("filename")
-        if not filename:
-            return func.HttpResponse("Missing filename in route", status_code=400)
-
-        # In den Blob schreiben
+        # Datei in den Blob schreiben (über Binding aus function.json)
         outputBlob.set(data)
 
         return func.HttpResponse(
-            f"Uploaded to blob 'uploads/{filename}'",
+            "File successfully uploaded to blob storage.",
             status_code=200
         )
+
     except Exception as e:
-        return func.HttpResponse(f"Upload error: {e}", status_code=500)
+        logging.error(f"Upload error: {e}")
+        return func.HttpResponse(
+            f"Upload error: {e}",
+            status_code=500
+        )
