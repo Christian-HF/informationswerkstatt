@@ -1,8 +1,8 @@
 {
   "scriptFile": "__init__.py",
   "bindings": [
-    {"authLevel":"anonymous","type":"httpTrigger","direction":"in","name":"req","methods":["post"],"route":"upload"},
-    {"type":"http","direction":"out","name":"res"},
-    {"type":"blob","direction":"out","name":"outputBlob","path":"uploads/{headers.x-filename}","connection":"AZURE_STORAGE_CONNECTION_STRING"}
+    { "authLevel": "anonymous", "type": "httpTrigger", "direction": "in", "name": "req", "methods": ["post"], "route": "upload" },
+    { "type": "http", "direction": "out", "name": "res" },
+    { "type": "blob", "direction": "out", "name": "outputBlob", "path": "uploads/{headers.x-filename}", "connection": "AZURE_STORAGE_CONNECTION_STRING" }
   ]
 }
