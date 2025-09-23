@@ -8,6 +8,10 @@ on:
       - 'upload/**'
       - '.github/workflows/deploy-function.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,7 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # (Optional) Prüfen, dass host.json und upload/ vorhanden sind
       - name: Verify structure
         run: |
           test -f host.json || (echo "host.json missing at repo root" && exit 1)
@@ -23,7 +26,6 @@ jobs:
           test -f upload/__init__.py || (echo "upload/__init__.py missing" && exit 1)
           echo "Structure OK"
 
-      # Deploy direkt mit Publish Profile (funktioniert für Linux/Python Consumption)
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         with:
