@@ -43,7 +43,7 @@ jobs:
       # Wird nur ausgeführt, wenn Schritt oben fehlschlägt
       - name: Fallback deploy via WebApps
         if: failure()
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v1
         with:
           app-name: func-hf-info-dev
           package: function.zip
