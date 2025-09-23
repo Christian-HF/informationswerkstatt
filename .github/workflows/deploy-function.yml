@@ -1,16 +1,12 @@
-name: Deploy Function (upload)
+name: Deploy upload function
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'host.json'
-      - 'upload/**'
-      - '.github/workflows/deploy-function.yml'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+      - "host.json"
+      - "upload/**"
+      - ".github/workflows/deploy-function.yml"
 
 jobs:
   deploy:
@@ -26,25 +22,9 @@ jobs:
           test -f upload/__init__.py || (echo "upload/__init__.py missing" && exit 1)
           echo "Structure OK"
 
-      - name: Create zip package
-        run: |
-          rm -f function.zip
-          zip -r function.zip host.json upload
-
-      # Variante 1: Spezielle Function-Action (meist ok)
-      - name: Deploy via Functions Action
+      - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         with:
           app-name: func-hf-info-dev
-          package: function.zip
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-
-      # Variante 2 (Fallback): WebApps Deploy (ebenfalls für Functions geeignet)
-      # Wird nur ausgeführt, wenn Schritt oben fehlschlägt
-      - name: Fallback deploy via WebApps
-        if: failure()
-        uses: azure/webapps-deploy@v1
-        with:
-          app-name: func-hf-info-dev
-          package: function.zip
+          package: .
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
