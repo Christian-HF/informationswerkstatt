@@ -2,24 +2,24 @@
   "scriptFile": "__init__.py",
   "bindings": [
     {
-      "authLevel": "anonymous",
+      "authLevel": "function",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": [ "post" ],
+      "methods": ["post"],
       "route": "upload/{filename}"
     },
     {
       "type": "http",
       "direction": "out",
-      "name": "res"
+      "name": "$return"
     },
     {
       "type": "blob",
       "direction": "out",
       "name": "outputBlob",
       "path": "uploads/{filename}",
-      "connection": "AzureWebJobsStorage"
+      "connection": "AZURE_STORAGE_CONNECTION_STRING"
     }
   ]
 }
