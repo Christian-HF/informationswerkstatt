@@ -8,9 +8,11 @@ def main(req: func.HttpRequest, outputBlob: func.Out[bytes]) -> func.HttpRespons
 
         filename = req.headers.get("x-filename")
         if not filename:
-            return func.HttpResponse("Missing header 'x-filename'.", status_code=400)
+            return func.HttpResponse("Missing header 'x-filename'", status_code=400)
 
+        # Schreibe in den Blob
         outputBlob.set(data)
-        return func.HttpResponse(f"Uploaded to blob 'uploads/{filename}'.", status_code=200)
+
+        return func.HttpResponse(f"Uploaded to blob 'uploads/{filename}'", status_code=200)
     except Exception as e:
         return func.HttpResponse(f"Upload error: {e}", status_code=500)
