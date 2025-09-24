@@ -26,3 +26,87 @@ a{color:inherit}
   .sidebar.open{transform:translateX(0)}
   .content{padding:16px}
 }
+/* Globale Farbdefinitionen im Corporate Design */
+:root {
+  --hf-accent: #7AAB8A;
+  --hf-primary: #0E3C33;
+  --hf-secondary: #F5F8F6;
+}
+
+/* Grundlegende Layout- und Typografie-Einstellungen */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: var(--hf-secondary);
+  color: var(--hf-primary);
+}
+
+.app {
+  display: flex;
+}
+
+/* Sidebar-Styling */
+.sidebar {
+  width: 200px;
+  background: #fff;
+  padding: 1rem;
+  transition: width 0.2s;
+}
+
+.sidebar.open {
+  width: 200px;
+}
+
+.sidebar .brand {
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.nav a {
+  text-decoration: none;
+  color: var(--hf-primary);
+  padding: 0.5rem 0;
+}
+
+.nav a.active {
+  color: var(--hf-accent);
+}
+
+/* Beispiel für primäre Buttons */
+.button-primary {
+  background-color: var(--hf-accent);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+.content {
+  flex-grow: 1;
+  padding: 1rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.burger {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.hf-text-bold {
+  font-weight: bold;
+}
+
+.badge {
+  background-color: var(--hf-accent);
+  color: #fff;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
